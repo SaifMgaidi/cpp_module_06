@@ -61,8 +61,11 @@ bool	isFloat(const std::string& litteral, size_t size)
 
 	if (size < 3)
 		return (false);
+
 	for (size_t i = 0; i < size; i++)
 	{
+		if (n_dot && n_f)
+			return (false);
 		if (litteral[i] >= '0' && litteral[i] <= '9')
 			n_digit++;
 		else if (litteral[i] == '.')
@@ -73,8 +76,6 @@ bool	isFloat(const std::string& litteral, size_t size)
 			if (!n_digit || !n_dot)
 				return (false);
 		}
-		else
-			return (false);
 	}
 
 	if (!n_digit || n_dot != 1 || n_f != 1)
@@ -89,15 +90,13 @@ bool	isDouble(const std::string& litteral, size_t size)
 
 	if (size < 2)
 		return (false);
+
 	for (size_t i = 0; i < size; i++)
 	{
 		if (litteral[i] >= '0' && litteral[i] <= '9')
 			n_digit++;
 		else if (litteral[i] == '.')
 			n_dot++;
-		else
-			return (false);
-		
 	}
 
 	if (!n_digit || n_dot != 1)
@@ -105,87 +104,119 @@ bool	isDouble(const std::string& litteral, size_t size)
 	return (true);
 }
 
-long	convertStringToInt(std::string litteral, size_t size)
+bool	isSpecial(const std::string& litteral)
 {
-	long	n	= 0;
-	size_t	i	= 0;
-	int		f	= 1;
+	if (litteral == "+inff" || litteral == "inff" || litteral == "-inff" || litteral == "nanf")
+		return (true);
+	else if (litteral == "+inf" || litteral == "inf" || litteral == "-inf" || litteral == "nan")
+		return (true);
+	return (false);
+}
 
-	if (!size)
-		return (std::numeric_limits<long>::max());
+void	printChar(int c)
+{
+	if (c >= 32 && c <= 126)
+		std::cout << "char: " << static_cast<char>(c) << std::endl;
+	else if (c >= 0 && c <= 127)
+		std::cout << "char: Non displayable" << std::endl;
+	else
+		std::cout << "char: impossible" << std::endl;
+}
 
-	if (litteral[i] == '+' || litteral[i] == '-')
+void	printInt(long l)
+{
+	if (l < std::numeric_limits<int>::min() || l > std::numeric_limits<int>::max())
+		std::cout << "int: impossible" << std::endl;
+	else
+		std::cout << "int: " << static_cast<int>(l) << std::endl;
+}
+
+void	printFloat(double d, bool showPosSign)
+{
+	bool	is_valid =	(d >= -std::numeric_limits<float>::max() &&
+						d <= std::numeric_limits<float>::max()) ||
+						d == std::numeric_limits<double>::infinity() ||
+						d == -std::numeric_limits<double>::infinity() ||
+						d != d;
+
+	if (is_valid)
 	{
-		if (litteral[i] == '-')
-			f = -f;
-		i++;
+		std::cout << "float: ";
+		if (d == std::numeric_limits<double>::infinity() && showPosSign)
+			std::cout << "+";
+		std::cout << std::fixed << std::setprecision(1) << static_cast<float>(d) << "f" << std::endl;
+	
+	}
+	else
+		std::cout << "float: impossible" << std::endl;
+}
+
+void	printDouble(double d, bool showPosSign)
+{
+	if (errno == ERANGE && d == d)
+		std::cout << "double: impossible" << std::endl;
+	else
+	{
+		std::cout << "double: ";
+		if (d == std::numeric_limits<double>::infinity() && showPosSign)
+			std::cout << "+";
+		std::cout << std::fixed << std::setprecision(1) << static_cast<double>(d) << std::endl;
+	}
+}
+
+void	printFromChar(int c)
+{
+	printChar(c);
+	printInt(static_cast<long>(c));
+	printFloat(static_cast<double>(c), 0);
+	printDouble(static_cast<double>(c), 0);
+}
+
+void	printFromInt(long n)
+{
+	if (n < std::numeric_limits<int>::min() || n > std::numeric_limits<int>::max())
+		std::cout << "char: impossible" << std::endl;
+	else
+		printChar(static_cast<int>(n));
+	
+	printInt(n);
+
+	printFloat(static_cast<double>(n), 0);
+	printDouble(static_cast<double>(n), 0);
+}
+
+void	printFromFloatDouble(double n, bool showPosSign)
+{
+	if (n < std::numeric_limits<long>::min() || n > std::numeric_limits<long>::max() || n != n)
+	{	
+		std::cout << "char: impossible" << std::endl;
+		std::cout << "int: impossible" << std::endl;
+	}
+	else
+	{
+		printChar(static_cast<int>(n));
+		printInt(static_cast<long>(n));
 	}
 	
-	while (litteral[i])
-	{
-		if (litteral[i] < '0' || litteral[i] > '9')
-			return (std::numeric_limits<long>::max());
-		n *= 10;
-		n += litteral[i] - '0';
-		i++;
-	}
-	return (n * f);
+	printFloat(n, showPosSign);
+	printDouble(n, showPosSign);
 }
 
-double	convertStringToFloat(std::string litteral, size_t size)
-{
-	double	n	= 0.0;
-	int		f	= 1;
-	size_t	i	= 0;
-
-	if (!size - 1)
-		return (std::numeric_limits<double>::max());
-
-	if (litteral[i] == '+' || litteral[i] == '-')
-	{
-		if (litteral[i] == '-')
-			f = -f;
-		i++;
-	}
-
-	return (n * f);
-}
-
-
-void	printFromChar(char c)
-{
-	std::cout << "char: " << c << std::endl;
-	std::cout << "int: " << static_cast<int>(c) << std::endl;
-	std::cout << "float: " << static_cast<float>(c) << ".0f" << std::endl;
-	std::cout << "double: " << static_cast<double>(c) << ".0" << std::endl;
-}
-
-void	printToInt(int n)
-{
-	if (n >= 32 && n <= 126)
-		std::cout << "char: " << static_cast<char>(n) << std::endl;
-	else
-		std::cout << "char: Non displayable" << std::endl;
-	std::cout << "int: " << n << std::endl;
-	std::cout << "float: " << static_cast<float>(n) << ".0f" << std::endl;
-	std::cout << "double: " << static_cast<double>(n) << ".0" << std::endl;	
-}
 
 void	ScalarConverter::convert(std::string litteral)
 {
 	size_t	size	= litteral.size();
-	long	i		= 0;
-	float	f		= 0.0f;
-	double	d		= 0.0;
+	bool	posSign = 0;
+
+	if (litteral[0] == '+')
+		posSign = 1;
 
 	if (isChar(litteral, size))
-		printFromChar(litteral[0]);
+		printFromChar(static_cast<int>(litteral[0]));
 	else if (isInt(litteral, size))
-	{
-		i = convertStringToInt(litteral, size);
-		if (i < std::numeric_limits<int>::min() || i > std::numeric_limits<int>::max())
-			std::cout << "error: int overflow." << std::endl;
-		else
-			printToInt(i);
-	}
+		printFromInt(std::strtol(litteral.c_str(), NULL, 10));
+	else if (isFloat(litteral, size) || isDouble(litteral, size) || isSpecial(litteral))
+		printFromFloatDouble(std::strtod(litteral.c_str(), NULL), posSign);
+	else
+		std::cout << "error: syntax" << std::endl;
 }
